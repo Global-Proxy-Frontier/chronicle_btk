@@ -5,3 +5,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Ignore local screenshots and temporary exports
+/screenshots/
+
+# Local editor / OS files
+.vscode/
+.idea/
