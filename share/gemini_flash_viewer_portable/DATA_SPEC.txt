@@ -1,0 +1,51 @@
+DATA SPEC - GEMINI FLASH AML DEMO
+
+1) KONU
+- AI destekli AML davranis analizi (FinHikaye yaklasimi).
+- Model, musteri gecmisini okur ve suphe gerekcesi uretir.
+
+2) NEDEN LABEL YOK
+- Risk kolonlari modele verilirse sonuc ezber olur.
+- Bu sette hazir karar kolonlari intentionally yoktur:
+  risk_score, aml_risk_score, is_suspicious, laundering_type, aml_case_label vb.
+
+3) TABLO OZETI
+A) customers.csv
+- Musteri kimlik/profil bilgileri.
+- Analizde kimlik-baglamsal tutarlilik icin kullanilir.
+
+B) accounts.csv
+- Hesap yapisi ve finansal kapasite bilgileri.
+- Gelir-borc-limit-bakiye karsilastirmasi icin kullanilir.
+
+C) transactions_part1.csv + transactions_part2.csv
+- Ana davranis kayitlari (zaman, tutar, kanal, karsi taraf, lokasyon, cihaz).
+- Tek dosya limitini asmamak icin iki parcaya bolunmustur.
+- Viewer uygulamasi bu iki dosyayi otomatik birlestirir.
+
+D) customer_transaction_summary.csv
+- Hizli gorunum icin toplu metrikler (sayac/toplam).
+- Etiket degildir, operasyonel ozet amaclidir.
+
+4) GEMINI GIRDISI ICIN ONERI
+- Secili customer_id icin:
+  1) customers.csv satiri
+  2) accounts.csv satiri
+  3) transactions_part*.csv icinden son 80-150 islem
+- Promptta modelden su format istenir:
+  - Mevcut Durum
+  - Davranis Bulgulari
+  - Suphe Gerekcesi (varsa)
+  - Inceleme Onceligi
+
+5) URETIM PARAMETRELERI
+- 1000 musteri
+- 1000 hesap
+- 100000 islem
+- Yerli/yabanci karmasi
+- TRY/USD/EUR karmasi
+- SWIFT ve sinir otesi islem var
+
+6) GIZLILIK
+- Kimlik verileri hashlenmis/anonimdir (ornek: national_id_hash).
+- Demo amaclidir, gercek kisi verisi icermez.

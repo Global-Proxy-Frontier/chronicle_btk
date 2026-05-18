@@ -1,0 +1,20 @@
+{
+  "dataset_name": "gemini_flash_ready_v1",
+  "generated_at_utc": "2026-05-13T10:07:33.246Z",
+  "seed": 20260513,
+  "customer_count": 1000,
+  "transactions_per_customer": 100,
+  "total_transactions": 100000,
+  "files": [
+    "customers.csv",
+    "accounts.csv",
+    "transactions_part1.csv",
+    "transactions_part2.csv",
+    "customer_transaction_summary.csv"
+  ],
+  "notes": [
+    "Dataset contains raw behavioral and transactional fields.",
+    "No precomputed risk scores or suspicious labels are included.",
+    "Prepared for per-customer Gemini Flash analysis workloads."
+  ]
+}

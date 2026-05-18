@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gemini Dataset Viewer</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2c;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #26344f;
+      --accent: #14b8a6;
+      --accent2: #22d3ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(1200px 500px at 10% -10%, #1d3557, transparent), var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 16px; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    .sub { color: var(--muted); margin-bottom: 14px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #15233b, #101a2e);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .k { color: var(--muted); font-size: 12px; }
+    .v { font-size: 24px; font-weight: 700; margin-top: 4px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--accent2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 100px;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    input, select {
+      width: 100%;
+      background: #0d1527;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .list {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      max-height: 680px;
+      overflow: auto;
+    }
+    .item {
+      padding: 10px;
+      border-bottom: 1px solid #1f2b42;
+      cursor: pointer;
+    }
+    .item:hover { background: #13213a; }
+    .item.active { background: #16314d; border-left: 3px solid var(--accent); }
+    .item .n { font-weight: 600; }
+    .item .m { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .mini-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0f1c33;
+      padding: 10px;
+    }
+    .mini-panel h3 {
+      margin: 0 0 8px;
+      color: var(--accent2);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      row-gap: 6px;
+      column-gap: 8px;
+      font-size: 13px;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0e172b;
+    }
+    th, td {
+      padding: 7px 8px;
+      border-bottom: 1px solid #1f2b42;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      color: #9fb3c8;
+      background: #13213a;
+      font-weight: 600;
+    }
+
+    .tx-wrap {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      max-height: 330px;
+      overflow: auto;
+    }
+
+    .in { color: #34d399; font-weight: 700; }
+    .out { color: #f87171; font-weight: 700; }
+
+    .global-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .global-grid { grid-template-columns: 1fr 1fr; }
+      .split { grid-template-columns: 1fr; }
+      .tables { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Gemini Flash Veri Gozlem Uygulamasi</h1>
+    <div class="sub">Musteri, hesap, islem, kanal ve kategori dagilimlarini hizlica inceleme ekrani.</div>
+
+    <div class="cards" id="cards"></div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Musteri Listesi</h2>
+        <div class="controls">
+          <input id="q" placeholder="Musteri ID, ad, ulke ara" />
+          <select id="nationalityFilter">
+            <option value="">Tum uyruklar</option>
+            <option value="TR">TR</option>
+            <option value="DE">DE</option>
+            <option value="GB">GB</option>
+            <option value="AZ">AZ</option>
+            <option value="RU">RU</option>
+            <option value="AE">AE</option>
+            <option value="NL">NL</option>
+          </select>
+        </div>
+        <div id="customerList" class="list"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Secilen Musteri</h2>
+        <div id="emptyState" style="color:var(--muted);">Soldan bir musteri sec.</div>
+        <div id="detailRoot" style="display:none;">
+          <div class="split">
+            <div class="mini-panel">
+              <h3>Musteri Profil</h3>
+              <div id="customerKv" class="kv"></div>
+            </div>
+            <div class="mini-panel">
+              <h3>Hesap Profil</h3>
+              <div id="accountKv" class="kv"></div>
+            </div>
+          </div>
+
+          <div class="tables">
+            <table id="catTable"></table>
+            <table id="channelTable"></table>
+            <table id="dirTable"></table>
+          </div>
+
+          <div class="tx-wrap">
+            <table id="txTable"></table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:12px;">
+      <h2>Global Dagilimlar</h2>
+      <div class="global-grid">
+        <table id="globalCategory"></table>
+        <table id="globalChannel"></table>
+        <table id="globalCurrency"></table>
+        <table id="globalNationality"></table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = { selectedCustomerId: null };
+
+    function fmt(n) {
+      return new Intl.NumberFormat('tr-TR').format(Number(n || 0));
+    }
+
+    function drawCards(summary) {
+      const root = document.getElementById('cards');
+      root.innerHTML = `
+        <div class="card"><div class="k">Musteri</div><div class="v">${fmt(summary.counts.customers)}</div></div>
+        <div class="card"><div class="k">Hesap</div><div class="v">${fmt(summary.counts.accounts)}</div></div>
+        <div class="card"><div class="k">Islem</div><div class="v">${fmt(summary.counts.transactions)}</div></div>
+      `;
+    }
+
+    function drawSimpleTable(elId, titleA, titleB, rows, top = 10) {
+      const root = document.getElementById(elId);
+      const body = rows.slice(0, top).map((r) => `<tr><td>${r.name}</td><td>${fmt(r.count)}</td></tr>`).join('');
+      root.innerHTML = `<thead><tr><th>${titleA}</th><th>${titleB}</th></tr></thead><tbody>${body}</tbody>`;
+    }
+
+    function fillKv(rootId, items) {
+      const root = document.getElementById(rootId);
+      root.innerHTML = items.map(([k, v]) => `<div class="k">${k}</div><div>${v || ''}</div>`).join('');
+    }
+
+    async function loadSummary() {
+      const res = await fetch('/api/summary');
+      const data = await res.json();
+      drawCards(data);
+      drawSimpleTable('globalCategory', 'Kategori', 'Adet', data.distributions.category, 12);
+      drawSimpleTable('globalChannel', 'Kanal', 'Adet', data.distributions.channel, 10);
+      drawSimpleTable('globalCurrency', 'PB', 'Adet', data.distributions.currency, 10);
+      drawSimpleTable('globalNationality', 'Uyruk', 'Adet', data.distributions.nationality, 10);
+    }
+
+    async function loadCustomers() {
+      const q = document.getElementById('q').value.trim();
+      const nationality = document.getElementById('nationalityFilter').value;
+      const url = new URL('/api/customers', window.location.origin);
+      if (q) url.searchParams.set('q', q);
+      if (nationality) url.searchParams.set('nationality', nationality);
+      url.searchParams.set('limit', '120');
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      const root = document.getElementById('customerList');
+      root.innerHTML = data.rows.map((c) => `
+        <div class="item ${state.selectedCustomerId === c.customer_id ? 'active' : ''}" data-id="${c.customer_id}">
+          <div class="n">${c.customer_id} - ${c.full_name}</div>
+          <div class="m">${c.nationality}/${c.residency_country} - KYC: ${c.kyc_level} - Islem: ${fmt(c.transaction_count)}</div>
+        </div>
+      `).join('');
+
+      root.querySelectorAll('.item').forEach((el) => {
+        el.addEventListener('click', () => {
+          state.selectedCustomerId = el.getAttribute('data-id');
+          loadCustomers();
+          loadDetail(state.selectedCustomerId);
+        });
+      });
+
+      if (!state.selectedCustomerId && data.rows.length) {
+        state.selectedCustomerId = data.rows[0].customer_id;
+        loadDetail(state.selectedCustomerId);
+      }
+    }
+
+    async function loadDetail(customerId) {
+      const res = await fetch(`/api/customer/${customerId}?limit=80`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('detailRoot').style.display = 'block';
+
+      const c = data.customer;
+      const a = data.account || {};
+      const s = data.summary || {};
+
+      fillKv('customerKv', [
+        ['Musteri ID', c.customer_id],
+        ['Ad Soyad', c.full_name],
+        ['Uyruk', c.nationality],
+        ['Ikamet', `${c.residency_city}/${c.residency_country}`],
+        ['Dogum', `${c.date_of_birth} (${c.birth_city}/${c.birth_country})`],
+        ['Meslek', c.occupation],
+        ['Aylik Gelir', fmt(c.monthly_income_try)],
+        ['Guncel Borc', fmt(c.current_debt_try)],
+        ['PEP/Sanction/Watch', `${c.pep_flag}/${c.sanctions_flag}/${c.watchlist_flag}`]
+      ]);
+
+      fillKv('accountKv', [
+        ['Hesap ID', a.account_id],
+        ['IBAN', a.iban],
+        ['Sube', `${a.branch_name} (${a.branch_code})`],
+        ['Bakiye', fmt(a.current_balance)],
+        ['Acilis Bakiye', fmt(a.opening_balance)],
+        ['Kredi Limit', fmt(a.credit_limit)],
+        ['Hesap Durumu', a.account_status],
+        ['Islem Sayisi', fmt(s.transaction_count || 0)],
+        ['Cross Border', fmt(s.cross_border_count || 0)]
+      ]);
+
+      drawSimpleTable('catTable', 'Musteri Kategori', 'Adet', data.aggregates.category, 12);
+      drawSimpleTable('channelTable', 'Musteri Kanal', 'Adet', data.aggregates.channel, 10);
+      drawSimpleTable('dirTable', 'Musteri Yon', 'Adet', data.aggregates.direction, 3);
+
+      const txRows = data.transactions.map((tx) => `
+        <tr>
+          <td>${tx.transaction_datetime}</td>
+          <td class="${tx.direction === 'IN' ? 'in' : 'out'}">${tx.direction}</td>
+          <td>${tx.category}</td>
+          <td>${tx.channel}</td>
+          <td>${fmt(tx.amount_try)}</td>
+          <td>${tx.currency}</td>
+          <td>${tx.counterparty_country}/${tx.counterparty_city}</td>
+          <td>${tx.is_cross_border === '1' ? 'Evet' : 'Hayir'}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('txTable').innerHTML = `
+        <thead>
+          <tr>
+            <th>Zaman</th>
+            <th>Yon</th>
+            <th>Kategori</th>
+            <th>Kanal</th>
+            <th>Tutar (TRY)</th>
+            <th>PB</th>
+            <th>Karsi Taraf</th>
+            <th>Sinir Otesi</th>
+          </tr>
+        </thead>
+        <tbody>${txRows}</tbody>
+      `;
+    }
+
+    document.getElementById('q').addEventListener('input', loadCustomers);
+    document.getElementById('nationalityFilter').addEventListener('change', loadCustomers);
+
+    loadSummary();
+    loadCustomers();
+  </script>
+</body>
+</html>
